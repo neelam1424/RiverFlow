@@ -7,6 +7,7 @@ let client = new Client();
 client
     .setEndpoint(env.appwrite.endpoint) // Your API Endpoint
     .setProject(env.appwrite.projectId) // Your project ID
+    .setKey(env.appwrite.apikey!);
 
      const databases = new Databases(client);
         const users = new Users(client);

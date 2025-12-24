@@ -1,54 +1,56 @@
-import { IndexType, Permission} from "node-appwrite"
+import { IndexType, Permission } from "node-appwrite";
+import { db, questionCollection } from "../name";
+import { databases } from "./config";
 
-import {db, questionCollection} from '../name'
-import { databases } from "./config"
+const sleep = (ms: number) =>
+  new Promise(resolve => setTimeout(resolve, ms));
 
+export default async function createQuestionCollection() {
 
-export default async function createQuestionCollection(){
-    //create collection
-    //await instance_of_database.createCollection(databaseId, name_of_collection, name_of_id, [permisiions.read,create])
+  // 1️⃣ Create collection
+  await databases.createCollection(
+    db,
+    questionCollection,
+    questionCollection,
+    [
+      Permission.read("any"),
+      Permission.read("users"),
+      Permission.create("users"),
+      Permission.update("users"),
+      Permission.delete("users"),
+    ]
+  );
 
-    await databases.createCollection(db, questionCollection,questionCollection,[
-        Permission.read("any"),
-        Permission.read("users"),
-        Permission.create("users"),
-        Permission.update("users"),
-        Permission.delete("users")
-    ])
-    console.log("Question collection is created")
+  console.log("Question collection is created");
 
+  // 2️⃣ Create attributes (SEQUENTIAL)
+  await databases.createStringAttribute(db, questionCollection, "title", 100, true);
+  await databases.createStringAttribute(db, questionCollection, "content", 10000, true);
+  await databases.createStringAttribute(db, questionCollection, "authorId", 50, true);
+  await databases.createStringAttribute(db, questionCollection, "tags", 50, true, undefined, true);
+  await databases.createStringAttribute(db, questionCollection, "attachmentId", 50, false);
 
-    //create attributes and Indexes
+  console.log("Question attributes created");
 
-    await Promise.all([
-        databases.createStringAttribute(db,questionCollection,"title",100, true),
-        databases.createStringAttribute(db,questionCollection,"content",10000, true),
-        databases.createStringAttribute(db,questionCollection,"autorId",50, true),
-        databases.createStringAttribute(db,questionCollection,"tags",50, true, undefined, true),
-        databases.createStringAttribute(db,questionCollection,"attachmentId",50,false),
+  // ⏳ Give Appwrite time to register attributes
+  await sleep(2000);
 
-    ])
-    console.log("Question Attributes created")
+  // 3️⃣ Create indexes
+  await databases.createIndex(
+    db,
+    questionCollection,
+    "title_index",
+    IndexType.Fulltext,
+    ["title"]
+  );
 
+  await databases.createIndex(
+    db,
+    questionCollection,
+    "content_index",
+    IndexType.Fulltext,
+    ["content"]
+  );
 
-    //create Indexes
-
-    await Promise.all([
-    databases.createIndex(
-      db,
-      questionCollection,
-      "title",
-      IndexType.Fulltext,
-      ["title"],
-      ['asc']
-    ),
-    databases.createIndex(
-      db,
-      questionCollection,
-      "content",
-      IndexType.Fulltext,
-      ["content"],
-      ['asc']
-    )
-  ])
+  console.log("Question indexes created");
 }
